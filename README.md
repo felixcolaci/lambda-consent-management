@@ -10,11 +10,77 @@ authorName: 'Serverless, inc.'
 authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
 -->
 
-# Serverless Framework Node HTTP API on AWS
+# Simple Consent API
 
-This template demonstrates how to make a simple HTTP API with Node.js running on AWS Lambda and API Gateway using the Serverless Framework.
+This collection of lambda functions can be used to simulate an external consent managment system. The lambda functions can be conviently integrated with [okta workflows](https://help.okta.com/wf/en-us/Content/Topics/Workflows/connector-reference/awslambda/awslambda.htm) or [auth0 actions](https://auth0.com/docs/customize/actions).
 
-This template does not include any kind of persistence (database). For more advanced examples, check out the [serverless/examples repository](https://github.com/serverless/examples/) which includes Typescript, Mongo, DynamoDB and other examples.
+## Components
+
+_Store Consent Lambda_
+
+Store a new consent for a user. The consent type is not verified internally. Store any consent you need for your business requirement.
+
+```js
+await lambda
+  .invoke({
+    FunctionName: lambdaName("store-consent"),
+    InvocationType: "RequestResponse",
+    Payload: JSON.stringify({
+      userId: "123a",
+      consentType: "email",
+    }),
+  })
+  .promise();
+```
+
+_Revoke Consent Lambda_
+
+Updates a previously stored consent and sets the `granted` attribute to false.
+
+```js
+response = await lambda
+  .invoke({
+    FunctionName: lambdaName("revoke-consent"),
+    InvocationType: "RequestResponse",
+    Payload: JSON.stringify({
+      userId: "123a",
+      consentType: "sms",
+    }),
+  })
+  .promise();
+```
+
+_Remove Consent Lambda_
+
+Deletes all consents that have been stored for a user permanently. Used to implement the right to be forgotten.
+
+```js
+await lambda
+  .invoke({
+    FunctionName: lambdaName("remove-user-consent"),
+    InvocationType: "RequestResponse",
+    Payload: JSON.stringify({
+      userId: "123a",
+    }),
+  })
+  .promise();
+```
+
+_Get User Consent Lambda_
+
+Retrieves all consents stored for a given user id.
+
+```js
+await lambda
+  .invoke({
+    FunctionName: lambdaName("get-user-consent"),
+    InvocationType: "RequestResponse",
+    Payload: JSON.stringify({
+      userId: "123a",
+    }),
+  })
+  .promise();
+```
 
 ## Usage
 
@@ -73,7 +139,6 @@ Which should result in response similar to the following:
   "body": "{\n  \"message\": \"Go Serverless v3.0! Your function executed successfully!\",\n  \"input\": \"\"\n}"
 }
 ```
-
 
 Alternatively, it is also possible to emulate API Gateway and Lambda locally by using `serverless-offline` plugin. In order to do that, execute the following command:
 
