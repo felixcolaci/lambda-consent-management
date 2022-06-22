@@ -1,0 +1,59 @@
+service: consent-api
+frameworkVersion: "3"
+
+custom:
+  tableName: "consent-table"
+plugins:
+  - serverless-offline
+provider:
+  name: aws
+  region: eu-central-1
+  runtime: nodejs14.x
+  stage: ${opt:stage, 'dev'}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            "Fn::GetAtt": [consentTable, Arn]
+functions:
+  store-consent:
+    handler: store-consent.handler
+    environment:
+      TABLE_NAME: "${self:service}-${self:provider.stage}-${self:custom.tableName}"
+  revoke-consent:
+    handler: revoke-consent.handler
+    environment:
+      TABLE_NAME: "${self:service}-${self:provider.stage}-${self:custom.tableName}"
+  remove-user-consent:
+    handler: remove-user-consent.handler
+    environment:
+      TABLE_NAME: "${self:service}-${self:provider.stage}-${self:custom.tableName}"
+  get-user-consent:
+    handler: get-user-consent.handler
+    environment:
+      TABLE_NAME: ${self:service}-${self:provider.stage}-${self:custom.tableName}
+
+resources:
+  Resources:
+    consentTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-${self:provider.stage}-${self:custom.tableName}
+        AttributeDefinitions:
+          - AttributeName: user_id
+            AttributeType: S
+          - AttributeName: consent
+            AttributeType: S
+        KeySchema:
+          - AttributeName: user_id
+            KeyType: HASH
+          - AttributeName: consent
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
